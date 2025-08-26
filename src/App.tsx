@@ -56,7 +56,7 @@ const AppContent = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      {user?.userType === 'sme' ? <SMEDashboard /> : <Dashboard />}
+      {user?.user_type === 'sme' ? <SMEDashboard /> : <Dashboard />}
     </div>
   );
 };

@@ -1,25 +1,28 @@
 import React, { useState } from 'react';
 import { X, Upload, Calendar, DollarSign, Target, FileText, Image, Building2 } from 'lucide-react';
 import { ProjectFormData } from '../types';
+import { apiService } from '../services/api';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onProjectCreated?: () => void;
 }
 
-const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose }) => {
+const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose, onProjectCreated }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
     symbol: '',
     description: '',
     category: '',
-    targetAmount: 0,
-    pricePerToken: 0,
-    totalSupply: 0,
-    endDate: '',
-    riskLevel: 'Medium',
+    target_amount: 0,
+    price_per_token: 0,
+    total_supply: 0,
+    end_date: '',
+    risk_level: 'Medium',
   });
 
   if (!isOpen) return null;
@@ -41,7 +44,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name.includes('Amount') || name.includes('Token') || name.includes('Supply') 
+      [name]: name.includes('amount') || name.includes('token') || name.includes('supply') 
         ? parseFloat(value) || 0 
         : value
     }));
@@ -60,44 +63,56 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
 
     try {
-      // Mock API call - replace with actual backend call
-      console.log('Creating project:', formData);
+      // Prepare project data for API
+      const projectData = {
+        name: formData.name,
+        symbol: formData.symbol.toUpperCase(),
+        description: formData.description,
+        category: formData.category,
+        target_amount: formData.target_amount,
+        price_per_token: formData.price_per_token,
+        total_supply: formData.total_supply,
+        end_date: formData.end_date,
+        risk_level: formData.risk_level,
+        image_url: formData.image_url || '',
+        business_plan_url: formData.business_plan_url || '',
+        whitepaper_url: formData.whitepaper_url || '',
+      };
+
+      const response = await apiService.createProject(projectData);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Here you would make the actual API call to create the project
-      // const response = await fetch('/api/projects', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${token}`
-      //   },
-      //   body: JSON.stringify(formData)
-      // });
-      
-      alert('Project created successfully! It will be reviewed and published within 24 hours.');
-      onClose();
-      
-      // Reset form
-      setFormData({
-        name: '',
-        symbol: '',
-        description: '',
-        category: '',
-        targetAmount: 0,
-        pricePerToken: 0,
-        totalSupply: 0,
-        endDate: '',
-        riskLevel: 'Medium',
-      });
-      setCurrentStep(1);
+      if (response.error) {
+        setError(response.error);
+      } else {
+        alert('Project created successfully! It will be reviewed and published within 24 hours.');
+        onClose();
+        
+        // Reset form
+        setFormData({
+          name: '',
+          symbol: '',
+          description: '',
+          category: '',
+          target_amount: 0,
+          price_per_token: 0,
+          total_supply: 0,
+          end_date: '',
+          risk_level: 'Medium',
+        });
+        setCurrentStep(1);
+        
+        // Callback to refresh projects list
+        if (onProjectCreated) {
+          onProjectCreated();
+        }
+      }
       
     } catch (error) {
       console.error('Error creating project:', error);
-      alert('Failed to create project. Please try again.');
+      setError('Failed to create project. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -112,7 +127,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
   };
 
   const isStep1Valid = formData.name && formData.symbol && formData.description && formData.category;
-  const isStep2Valid = formData.targetAmount > 0 && formData.pricePerToken > 0 && formData.totalSupply > 0 && formData.endDate;
+  const isStep2Valid = formData.target_amount > 0 && formData.price_per_token > 0 && formData.total_supply > 0 && formData.end_date;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -127,6 +142,12 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
               <X className="h-5 w-5" />
             </button>
           </div>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
 
           {/* Progress Steps */}
           <div className="flex items-center mb-8">
@@ -239,8 +260,8 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                       <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                       <input
                         type="number"
-                        name="targetAmount"
-                        value={formData.targetAmount || ''}
+                        name="target_amount"
+                        value={formData.target_amount || ''}
                         onChange={handleInputChange}
                         className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="1000000"
@@ -258,8 +279,8 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                       <Target className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                       <input
                         type="number"
-                        name="pricePerToken"
-                        value={formData.pricePerToken || ''}
+                        name="price_per_token"
+                        value={formData.price_per_token || ''}
                         onChange={handleInputChange}
                         step="0.01"
                         className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -277,8 +298,8 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                   </label>
                   <input
                     type="number"
-                    name="totalSupply"
-                    value={formData.totalSupply || ''}
+                    name="total_supply"
+                    value={formData.total_supply || ''}
                     onChange={handleInputChange}
                     className="px-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="1000000"
@@ -296,8 +317,8 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                       <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                       <input
                         type="date"
-                        name="endDate"
-                        value={formData.endDate}
+                        name="end_date"
+                        value={formData.end_date}
                         onChange={handleInputChange}
                         className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         min={new Date().toISOString().split('T')[0]}
@@ -311,8 +332,8 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                       Risk Level *
                     </label>
                     <select
-                      name="riskLevel"
-                      value={formData.riskLevel}
+                      name="risk_level"
+                      value={formData.risk_level}
                       onChange={handleInputChange}
                       className="px-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
@@ -333,82 +354,55 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Project Image
+                    Project Image URL
                   </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                     <Image className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">Upload project image</p>
+                    <p className="text-sm text-gray-600 mb-2">Enter image URL</p>
                     <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileChange(e, 'image')}
-                      className="hidden"
-                      id="image-upload"
+                      type="url"
+                      name="image_url"
+                      value={formData.image_url || ''}
+                      onChange={handleInputChange}
+                      className="px-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="https://example.com/image.jpg"
                     />
-                    <label
-                      htmlFor="image-upload"
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Choose File
-                    </label>
-                    {formData.image && (
-                      <p className="text-xs text-green-600 mt-2">✓ {formData.image.name}</p>
-                    )}
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Business Plan (PDF)
+                    Business Plan URL
                   </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                     <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">Upload business plan</p>
+                    <p className="text-sm text-gray-600 mb-2">Enter business plan URL</p>
                     <input
-                      type="file"
-                      accept=".pdf"
-                      onChange={(e) => handleFileChange(e, 'businessPlan')}
-                      className="hidden"
-                      id="business-plan-upload"
+                      type="url"
+                      name="business_plan_url"
+                      value={formData.business_plan_url || ''}
+                      onChange={handleInputChange}
+                      className="px-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="https://example.com/business-plan.pdf"
                     />
-                    <label
-                      htmlFor="business-plan-upload"
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Choose File
-                    </label>
-                    {formData.businessPlan && (
-                      <p className="text-xs text-green-600 mt-2">✓ {formData.businessPlan.name}</p>
-                    )}
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Whitepaper (PDF)
+                    Whitepaper URL
                   </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                     <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">Upload whitepaper</p>
+                    <p className="text-sm text-gray-600 mb-2">Enter whitepaper URL</p>
                     <input
-                      type="file"
-                      accept=".pdf"
-                      onChange={(e) => handleFileChange(e, 'whitepaper')}
-                      className="hidden"
-                      id="whitepaper-upload"
+                      type="url"
+                      name="whitepaper_url"
+                      value={formData.whitepaper_url || ''}
+                      onChange={handleInputChange}
+                      className="px-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="https://example.com/whitepaper.pdf"
                     />
-                    <label
-                      htmlFor="whitepaper-upload"
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Choose File
-                    </label>
-                    {formData.whitepaper && (
-                      <p className="text-xs text-green-600 mt-2">✓ {formData.whitepaper.name}</p>
-                    )}
                   </div>
                 </div>
               </div>

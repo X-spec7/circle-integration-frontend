@@ -12,9 +12,9 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
   const [showPayment, setShowPayment] = useState(false);
   const [investmentAmount, setInvestmentAmount] = useState(100);
   
-  const progressPercentage = (project.currentRaised / project.targetAmount) * 100;
-  const daysLeft = Math.ceil((new Date(project.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-  const tokensToReceive = Math.floor(investmentAmount / project.pricePerToken);
+  const progressPercentage = (parseFloat(project.current_raised) / parseFloat(project.target_amount)) * 100;
+  const daysLeft = Math.ceil((new Date(project.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  const tokensToReceive = Math.floor(investmentAmount / parseFloat(project.price_per_token));
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
@@ -43,7 +43,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
         {/* Header */}
         <div className="relative">
           <img 
-            src={project.image} 
+            src={project.image_url || 'https://images.pexels.com/photos/9875416/pexels-photo-9875416.jpeg?auto=compress&cs=tinysrgb&w=800'} 
             alt={project.name}
             className="w-full h-64 object-cover rounded-t-2xl"
           />
@@ -60,8 +60,8 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
                   <h2 className="text-2xl font-bold text-gray-900 mb-1">{project.name}</h2>
                   <p className="text-blue-600 font-medium">{project.symbol} • {project.category}</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getRiskColor(project.riskLevel)}`}>
-                  {project.riskLevel} Risk
+                <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getRiskColor(project.risk_level)}`}>
+                  {project.risk_level} Risk
                 </span>
               </div>
             </div>
@@ -78,11 +78,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
           {/* Key Metrics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-gray-50 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-gray-900">€{project.pricePerToken}</div>
+              <div className="text-2xl font-bold text-gray-900">€{parseFloat(project.price_per_token).toFixed(2)}</div>
               <div className="text-sm text-gray-600">Token Price</div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-gray-900">{project.totalSupply.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-gray-900">{project.total_supply.toLocaleString()}</div>
               <div className="text-sm text-gray-600">Total Supply</div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg text-center">
@@ -100,7 +100,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium text-gray-700">Funding Progress</span>
               <span className="text-sm text-gray-600">
-                €{project.currentRaised.toLocaleString()} / €{project.targetAmount.toLocaleString()}
+                €{parseFloat(project.current_raised).toLocaleString()} / €{parseFloat(project.target_amount).toLocaleString()}
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
@@ -146,7 +146,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
                 </div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-600">Token price:</span>
-                  <span className="text-sm text-gray-900">€{project.pricePerToken}</span>
+                  <span className="text-sm text-gray-900">€{parseFloat(project.price_per_token).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Platform fee (2%):</span>

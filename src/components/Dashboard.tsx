@@ -1,27 +1,82 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TokenProject } from '../types';
-import { mockProjects } from '../data/projects';
+import { apiService } from '../services/api';
 import ProjectCard from './ProjectCard';
 import ProjectModal from './ProjectModal';
-import { Search, Filter, TrendingUp, DollarSign, Users, Target } from 'lucide-react';
+import { Search, Filter, TrendingUp, DollarSign, Users, Target, Loader } from 'lucide-react';
 
 const Dashboard = () => {
   const [selectedProject, setSelectedProject] = useState<TokenProject | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [projects, setProjects] = useState<TokenProject[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const categories = ['All', ...new Set(mockProjects.map(p => p.category))];
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const loadProjects = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getProjects({ status: 'active' });
+      
+      if (response.error) {
+        setError(response.error);
+      } else if (response.data) {
+        setProjects(response.data);
+      }
+    } catch (err) {
+      setError('Failed to load projects');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const categories = ['All', ...new Set(projects.map(p => p.category))];
   
-  const filteredProjects = mockProjects.filter(project => {
+  const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || project.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const totalRaised = mockProjects.reduce((sum, project) => sum + project.currentRaised, 0);
-  const activeProjects = mockProjects.filter(p => p.status === 'Active').length;
-  const totalInvestors = 1247; // Mock data
+  const totalRaised = projects.reduce((sum, project) => sum + parseFloat(project.current_raised), 0);
+  const activeProjects = projects.filter(p => p.status === 'active').length;
+  const totalInvestors = 1247; // Mock data - could be fetched from API
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading projects...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-red-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+            <Search className="h-8 w-8 text-red-600" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading projects</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={loadProjects}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

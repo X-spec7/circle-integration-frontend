@@ -8,8 +8,8 @@ interface ProjectCardProps {
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
-  const progressPercentage = (project.currentRaised / project.targetAmount) * 100;
-  const daysLeft = Math.ceil((new Date(project.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  const progressPercentage = (parseFloat(project.current_raised) / parseFloat(project.target_amount)) * 100;
+  const daysLeft = Math.ceil((new Date(project.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
   
   const getRiskColor = (risk: string) => {
     switch (risk) {
@@ -24,13 +24,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
       <div className="aspect-video relative overflow-hidden">
         <img 
-          src={project.image} 
+          src={project.image_url || 'https://images.pexels.com/photos/9875416/pexels-photo-9875416.jpeg?auto=compress&cs=tinysrgb&w=800'} 
           alt={project.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
         <div className="absolute top-4 right-4 flex space-x-2">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskColor(project.riskLevel)}`}>
-            {project.riskLevel} Risk
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskColor(project.risk_level)}`}>
+            {project.risk_level} Risk
           </span>
         </div>
       </div>
@@ -43,7 +43,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-500">Token Price</p>
-            <p className="text-lg font-bold text-gray-900">€{project.pricePerToken}</p>
+            <p className="text-lg font-bold text-gray-900">€{parseFloat(project.price_per_token).toFixed(2)}</p>
           </div>
         </div>
         
@@ -54,7 +54,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-gray-600">Progress</span>
               <span className="text-sm font-medium text-gray-900">
-                €{project.currentRaised.toLocaleString()} / €{project.targetAmount.toLocaleString()}
+                €{parseFloat(project.current_raised).toLocaleString()} / €{parseFloat(project.target_amount).toLocaleString()}
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">

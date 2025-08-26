@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { TokenProject, PaymentStatus } from '../types';
-import { ArrowLeft, CreditCard, Banknote, Shield, Clock, CheckCircle, AlertCircle, Copy, ExternalLink } from 'lucide-react';
+import { TokenProject, PaymentStatus, PaymentInitiation } from '../types';
+import { apiService } from '../services/api';
+import { ArrowLeft, CreditCard, Banknote, Shield, Clock, CheckCircle, AlertCircle, Copy, ExternalLink, Loader } from 'lucide-react';
 
 interface PaymentModalProps {
   project: TokenProject;
@@ -20,42 +21,58 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'crypto' | 'fiat' | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [showBankDetails, setShowBankDetails] = useState(false);
-  const [referenceId] = useState(() => `FR${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`);
+  const [paymentInitiation, setPaymentInitiation] = useState<PaymentInitiation | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const bankDetails = {
-    accountHolder: 'FundRaise Platform',
-    iban: 'GB29 NWBK 6016 1331 9268 19',
-    bic: 'NWBKGB2L',
-    reference: referenceId,
-    amount: amount
-  };
-
-  const handlePaymentMethodSelect = (method: 'crypto' | 'fiat') => {
+  const handlePaymentMethodSelect = async (method: 'crypto' | 'fiat') => {
     setSelectedPaymentMethod(method);
+    setLoading(true);
+    setError(null);
     
-    if (method === 'fiat') {
-      setShowBankDetails(true);
-    } else {
-      // Crypto placeholder
-      setPaymentStatus({
-        status: 'pending',
-        message: 'Crypto payment option coming soon!'
-      });
+    try {
+      if (method === 'fiat') {
+        const response = await apiService.initiatePayment({
+          project_id: project.id,
+          amount: amount,
+          payment_method: 'fiat'
+        });
+        
+        if (response.error) {
+          setError(response.error);
+        } else if (response.data) {
+          setPaymentInitiation(response.data);
+          setShowBankDetails(true);
+        }
+      } else {
+        // Crypto payment - would need wallet address from user
+        setError('Crypto payment requires wallet address. Please contact support.');
+      }
+    } catch (err) {
+      setError('Failed to initiate payment');
+    } finally {
+      setLoading(false);
     }
   };
 
   const simulatePaymentProcessing = () => {
     setPaymentStatus({
+      payment_id: paymentInitiation?.payment_id || '',
       status: 'processing',
-      message: 'Processing your bank transfer...'
+      amount: amount.toString(),
+      currency: 'EUR',
+      created_at: new Date().toISOString()
     });
 
-    // Simulate backend processing
+    // In a real implementation, this would poll the payment status
     setTimeout(() => {
       setPaymentStatus({
+        payment_id: paymentInitiation?.payment_id || '',
         status: 'completed',
-        message: 'Payment received! Your tokens will be distributed within 24 hours.',
-        transactionId: `TX${Math.random().toString(36).substr(2, 8).toUpperCase()}`
+        amount: amount.toString(),
+        currency: 'EUR',
+        transaction_hash: `TX${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
+        created_at: new Date().toISOString()
       });
     }, 3000);
   };
@@ -73,12 +90,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">Payment Successful!</h3>
-            <p className="text-gray-600 mb-4">{paymentStatus.message}</p>
+            <p className="text-gray-600 mb-4">Your tokens will be distributed within 24 hours.</p>
             
             <div className="bg-gray-50 p-4 rounded-lg mb-4">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-600">Transaction ID:</span>
-                <span className="font-mono font-medium">{paymentStatus.transactionId}</span>
+                <span className="font-mono font-medium">{paymentStatus.transaction_hash}</span>
               </div>
               <div className="flex justify-between items-center text-sm mt-2">
                 <span className="text-gray-600">Tokens Reserved:</span>
@@ -107,9 +124,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               <Clock className="h-8 w-8 text-blue-600 animate-pulse" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">Processing Payment</h3>
-            <p className="text-gray-600 mb-4">{paymentStatus.message}</p>
+            <p className="text-gray-600 mb-4">Processing your bank transfer...</p>
             <div className="flex justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <Loader className="h-8 w-8 animate-spin text-blue-600" />
             </div>
           </div>
         </div>
@@ -117,7 +134,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     );
   }
 
-  if (showBankDetails) {
+  if (showBankDetails && paymentInitiation) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
@@ -147,63 +164,63 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-600">Account Holder</span>
                   <button 
-                    onClick={() => copyToClipboard(bankDetails.accountHolder)}
+                    onClick={() => copyToClipboard(paymentInitiation.bank_details?.account_name || '')}
                     className="text-blue-600 hover:text-blue-700 text-xs flex items-center"
                   >
                     <Copy className="h-3 w-3 mr-1" />
                     Copy
                   </button>
                 </div>
-                <p className="font-medium text-gray-900">{bankDetails.accountHolder}</p>
+                <p className="font-medium text-gray-900">{paymentInitiation.bank_details?.account_name}</p>
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-600">IBAN</span>
                   <button 
-                    onClick={() => copyToClipboard(bankDetails.iban)}
+                    onClick={() => copyToClipboard(paymentInitiation.bank_details?.iban || '')}
                     className="text-blue-600 hover:text-blue-700 text-xs flex items-center"
                   >
                     <Copy className="h-3 w-3 mr-1" />
                     Copy
                   </button>
                 </div>
-                <p className="font-mono font-medium text-gray-900">{bankDetails.iban}</p>
+                <p className="font-mono font-medium text-gray-900">{paymentInitiation.bank_details?.iban}</p>
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-600">BIC/SWIFT</span>
                   <button 
-                    onClick={() => copyToClipboard(bankDetails.bic)}
+                    onClick={() => copyToClipboard(paymentInitiation.bank_details?.bic || '')}
                     className="text-blue-600 hover:text-blue-700 text-xs flex items-center"
                   >
                     <Copy className="h-3 w-3 mr-1" />
                     Copy
                   </button>
                 </div>
-                <p className="font-mono font-medium text-gray-900">{bankDetails.bic}</p>
+                <p className="font-mono font-medium text-gray-900">{paymentInitiation.bank_details?.bic}</p>
               </div>
 
               <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium text-yellow-800">Payment Reference (Required)</span>
                   <button 
-                    onClick={() => copyToClipboard(bankDetails.reference)}
+                    onClick={() => copyToClipboard(paymentInitiation.bank_details?.reference || '')}
                     className="text-yellow-700 hover:text-yellow-800 text-xs flex items-center"
                   >
                     <Copy className="h-3 w-3 mr-1" />
                     Copy
                   </button>
                 </div>
-                <p className="font-mono font-bold text-yellow-900">{bankDetails.reference}</p>
+                <p className="font-mono font-bold text-yellow-900">{paymentInitiation.bank_details?.reference}</p>
                 <p className="text-xs text-yellow-700 mt-1">Include this reference to ensure proper token allocation</p>
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Amount</span>
-                  <span className="font-bold text-xl text-gray-900">€{amount.toLocaleString()}</span>
+                  <span className="font-bold text-xl text-gray-900">€{parseFloat(paymentInitiation.amount).toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -215,7 +232,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                   <p className="text-sm font-medium text-orange-900 mb-2">Important Instructions:</p>
                   <ul className="text-xs text-orange-800 space-y-1">
                     <li>• Use the exact reference number provided above</li>
-                    <li>• Transfer the exact amount (€{amount})</li>
+                    <li>• Transfer the exact amount (€{parseFloat(paymentInitiation.amount).toLocaleString()})</li>
                     <li>• Processing time: 1-3 business days</li>
                     <li>• Tokens will be distributed within 24h of payment confirmation</li>
                   </ul>
@@ -276,10 +293,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
           </div>
 
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center">
+                <AlertCircle className="h-5 w-5 text-red-600 mr-3" />
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-4">
             <button
               onClick={() => handlePaymentMethodSelect('fiat')}
-              className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors group"
+              disabled={loading}
+              className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="flex items-center">
                 <div className="bg-green-100 p-3 rounded-lg mr-4 group-hover:bg-green-200 transition-colors">
@@ -290,13 +317,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                   <p className="text-sm text-gray-600">Transfer EUR to Circle IBAN</p>
                   <p className="text-xs text-blue-600">Recommended • Secure • 1-3 days</p>
                 </div>
+                {loading && <Loader className="h-5 w-5 animate-spin text-blue-600 ml-auto" />}
               </div>
             </button>
 
             <button
               onClick={() => handlePaymentMethodSelect('crypto')}
+              disabled={loading}
               className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors group opacity-50 cursor-not-allowed"
-              disabled
             >
               <div className="flex items-center">
                 <div className="bg-blue-100 p-3 rounded-lg mr-4 group-hover:bg-blue-200 transition-colors">
@@ -310,15 +338,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               </div>
             </button>
           </div>
-
-          {paymentStatus && paymentStatus.status === 'pending' && (
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center">
-                <AlertCircle className="h-5 w-5 text-blue-600 mr-3" />
-                <p className="text-sm text-blue-800">{paymentStatus.message}</p>
-              </div>
-            </div>
-          )}
 
           <div className="mt-6 pt-4 border-t border-gray-200">
             <p className="text-xs text-gray-500 text-center">

@@ -26,7 +26,7 @@ const Header = () => {
             </button>
             <div className="flex items-center space-x-3 bg-gray-50 rounded-lg px-3 py-2">
               <div className="bg-blue-600 p-1.5 rounded-full">
-                {user?.userType === 'sme' ? (
+                {user?.user_type === 'sme' ? (
                   <Coins className="h-4 w-4 text-white" />
                 ) : (
                   <User className="h-4 w-4 text-white" />
@@ -37,8 +37,8 @@ const Header = () => {
                   {user?.name || 'User'}
                 </p>
                 <p className="text-gray-500">
-                  {user?.userType === 'investor' 
-                    ? `€${user.portfolio?.toLocaleString() || '0'} Portfolio`
+                  {user?.user_type === 'investor' 
+                    ? 'Investor Account'
                     : user?.company || 'SME Account'
                   }
                 </p>

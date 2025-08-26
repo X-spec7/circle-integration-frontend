@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, AuthState } from '../types';
+import { apiService } from '../services/api';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
@@ -26,13 +27,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Check for existing session
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      const user = JSON.parse(savedUser);
-      setAuthState({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Verify token by getting current user
+      apiService.getCurrentUser().then((response) => {
+        if (response.data) {
+          setAuthState({
+            user: response.data,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } else {
+          // Token is invalid, clear it
+          localStorage.removeItem('token');
+          setAuthState({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
+        }
+      }).catch(() => {
+        // Error getting user, clear token
+        localStorage.removeItem('token');
+        setAuthState({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
       });
     } else {
       setAuthState(prev => ({ ...prev, isLoading: false }));
@@ -43,26 +64,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      // Mock API call - replace with actual backend call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await apiService.login({ username: email, password });
       
-      // Mock user data - this would come from your backend
-      const mockUser: User = {
-        id: '1',
-        email,
-        name: email.split('@')[0],
-        userType: email.includes('sme') ? 'sme' : 'investor',
-        createdAt: new Date().toISOString(),
-        portfolio: email.includes('sme') ? undefined : 25430,
-        company: email.includes('sme') ? 'Tech Innovations Ltd' : undefined,
-      };
+      if (response.error) {
+        throw new Error(response.error);
+      }
 
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      setAuthState({
-        user: mockUser,
-        isAuthenticated: true,
-        isLoading: false,
-      });
+      if (response.data?.access_token) {
+        localStorage.setItem('token', response.data.access_token);
+        
+        // Get user profile
+        const userResponse = await apiService.getCurrentUser();
+        if (userResponse.data) {
+          setAuthState({
+            user: userResponse.data,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } else {
+          throw new Error('Failed to get user profile');
+        }
+      } else {
+        throw new Error('Invalid login response');
+      }
     } catch (error) {
       setAuthState(prev => ({ ...prev, isLoading: false }));
       throw error;
@@ -79,25 +103,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      // Mock API call - replace with actual backend call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const newUser: User = {
-        id: Date.now().toString(),
+      const response = await apiService.register({
         email,
+        username: email, // Using email as username for simplicity
+        password,
         name,
-        userType,
-        createdAt: new Date().toISOString(),
-        portfolio: userType === 'investor' ? 0 : undefined,
-        company: userType === 'sme' ? company : undefined,
-      };
-
-      localStorage.setItem('user', JSON.stringify(newUser));
-      setAuthState({
-        user: newUser,
-        isAuthenticated: true,
-        isLoading: false,
+        user_type: userType,
+        company,
       });
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      if (response.data) {
+        // After successful registration, login the user
+        await login(email, password);
+      } else {
+        throw new Error('Registration failed');
+      }
     } catch (error) {
       setAuthState(prev => ({ ...prev, isLoading: false }));
       throw error;
@@ -105,7 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    localStorage.removeItem('user');
+    localStorage.removeItem('token');
     setAuthState({
       user: null,
       isAuthenticated: false,
