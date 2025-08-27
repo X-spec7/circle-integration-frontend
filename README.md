@@ -1,14 +1,14 @@
 # Circle Integration Frontend
 
-A React-based frontend for the Circle-powered fundraising platform that enables SMEs to launch token projects and investors to purchase tokens using both fiat (EUR via SEPA) and crypto payments.
+A React-based frontend for the blockchain-enabled investment platform that integrates with Circle payments and Polygon blockchain.
 
 ## Features
 
-- **User Authentication**: JWT-based authentication for investors and SMEs
-- **Project Management**: Create, view, and manage fundraising projects
-- **Investment Platform**: Browse and invest in token projects
-- **Payment Integration**: Support for fiat (SEPA) and crypto payments via Circle API
-- **Real-time Updates**: Live project status and investment tracking
+- **User Authentication**: Register and login with support for investors and SMEs
+- **Project Management**: Create, view, and manage investment projects
+- **Payment Integration**: Support for both fiat (SEPA) and crypto payments via Circle
+- **Blockchain Integration**: View token contracts and transactions on Polygonscan
+- **Real-time Updates**: Monitor payment status and project progress
 - **Responsive Design**: Modern UI built with Tailwind CSS
 
 ## Tech Stack
@@ -17,70 +17,63 @@ A React-based frontend for the Circle-powered fundraising platform that enables 
 - **Styling**: Tailwind CSS
 - **Icons**: Lucide React
 - **State Management**: React Context API
-- **API Integration**: Custom API service layer
+- **API Integration**: Fetch API with custom service layer
 
 ## Prerequisites
 
 - Node.js 18+ 
 - npm or yarn
-- Backend API running (see backend implementation guide)
+- Backend API running on `http://localhost:8000`
 
-## Setup Instructions
+## Environment Setup
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd circle-integration-frontend
-   ```
+Create a `.env` file in the root directory:
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+```env
+VITE_API_BASE_URL=http://localhost:8000
+VITE_POLYGONSCAN_URL=https://polygonscan.com
+```
 
-3. **Configure environment variables**
-   Create a `.env` file in the root directory:
-   ```env
-   # API Configuration
-   VITE_API_URL=http://localhost:8001/api/v1
-   
-   # Circle Configuration
-   VITE_CIRCLE_ENVIRONMENT=sandbox
-   
-   # Polygon Network Configuration
-   VITE_POLYGON_RPC_URL=https://polygon-rpc.com
-   ```
+## Installation
 
-4. **Start the development server**
-   ```bash
-   npm run dev
-   ```
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd circle-integration-frontend
+```
 
-5. **Open your browser**
-   Navigate to `http://localhost:5173`
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:5173`
 
 ## API Integration
 
-The frontend is fully integrated with the backend API using the following endpoints:
+The frontend integrates with the following backend endpoints:
 
 ### Authentication
 - `POST /api/v1/auth/register` - User registration
 - `POST /api/v1/auth/login` - User login
-- `GET /api/v1/users/me` - Get current user profile
+- `GET /api/v1/users/me` - Get current user
 
 ### Projects
-- `GET /api/v1/projects/` - List projects
+- `GET /api/v1/projects/` - List projects with filtering
 - `GET /api/v1/projects/{id}` - Get project details
-- `POST /api/v1/projects/` - Create project (SME only)
-- `PUT /api/v1/projects/{id}` - Update project
-- `DELETE /api/v1/projects/{id}` - Delete project
-- `GET /api/v1/projects/user/projects` - Get user's projects
+- `POST /api/v1/projects/` - Create new project (SME only)
+- `PUT /api/v1/projects/{id}` - Update project (owner only)
+- `GET /api/v1/projects/{id}/escrow-address` - Get project escrow address
 
 ### Payments
 - `POST /api/v1/payments/initiate` - Initiate fiat payment
 - `POST /api/v1/payments/crypto` - Initiate crypto payment
 - `GET /api/v1/payments/{id}/status` - Get payment status
-- `POST /api/v1/payments/confirm` - Confirm payment
 - `GET /api/v1/payments/investments` - Get user investments
 
 ## Project Structure
@@ -89,43 +82,45 @@ The frontend is fully integrated with the backend API using the following endpoi
 src/
 ├── components/          # React components
 │   ├── AuthModal.tsx   # Authentication modal
-│   ├── Dashboard.tsx   # Investor dashboard
-│   ├── SMEDashboard.tsx # SME dashboard
+│   ├── Dashboard.tsx   # Main dashboard
 │   ├── ProjectCard.tsx # Project display card
 │   ├── ProjectModal.tsx # Project details modal
-│   ├── PaymentModal.tsx # Payment processing modal
-│   └── CreateProjectModal.tsx # Project creation form
+│   └── ...
 ├── contexts/           # React contexts
-│   └── AuthContext.tsx # Authentication state management
+│   └── AuthContext.tsx # Authentication state
 ├── services/           # API services
-│   └── api.ts         # API client and endpoints
-├── types/             # TypeScript type definitions
-│   └── index.ts       # Shared types and interfaces
-└── data/              # Static data (if any)
-    └── projects.ts    # Mock data (replaced with API)
+│   └── api.ts         # API client
+├── types/              # TypeScript types
+│   └── index.ts       # Type definitions
+└── config/             # Configuration
+    └── env.ts         # Environment variables
 ```
 
-## Key Components
+## Key Features
 
 ### Authentication Flow
-- Users can register as either investors or SMEs
-- JWT tokens are stored in localStorage
-- Automatic token refresh and session management
+1. Users can register as either investors or SMEs
+2. Login uses username/password combination
+3. JWT tokens are stored in localStorage
+4. Automatic token validation on app load
 
 ### Project Management
-- SMEs can create new fundraising projects
-- Multi-step form with validation
-- Project status tracking (pending, active, completed, rejected)
+1. SMEs can create new projects with token deployment
+2. Projects include blockchain contract addresses
+3. Real-time progress tracking and status updates
+4. Integration with Polygonscan for contract verification
 
-### Investment Process
-- Investors can browse available projects
-- Real-time project statistics and progress
-- Secure payment flow with Circle integration
+### Payment Processing
+1. **Fiat Payments**: SEPA bank transfers via Circle API
+2. **Crypto Payments**: Direct transfers to escrow contracts
+3. **Status Tracking**: Real-time payment status updates
+4. **Token Distribution**: Automatic token allocation on payment completion
 
-### Payment Integration
-- Fiat payments via SEPA bank transfer
-- Crypto payments via direct transfer (coming soon)
-- Payment status tracking and confirmation
+### Blockchain Integration
+1. **Contract Addresses**: Display token and escrow contract addresses
+2. **Transaction Links**: Direct links to Polygonscan for verification
+3. **Deployment Tracking**: Monitor contract deployment status
+4. **Escrow Protection**: Funds held in smart contracts until conditions met
 
 ## Development
 
@@ -135,3 +130,10 @@ src/
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
+
+### Code Style
+
+- TypeScript for type safety
+- ESLint for code quality
+- Prettier for code formatting
+- Tailwind CSS for styling

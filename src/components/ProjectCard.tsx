@@ -1,14 +1,15 @@
 import React from 'react';
-import { TokenProject } from '../types';
-import { TrendingUp, Calendar, Shield, Target } from 'lucide-react';
+import { Project } from '../types';
+import { TrendingUp, Calendar, Shield, Target, ExternalLink } from 'lucide-react';
+import { apiService } from '../services/api';
 
 interface ProjectCardProps {
-  project: TokenProject;
-  onSelect: (project: TokenProject) => void;
+  project: Project;
+  onSelect: (project: Project) => void;
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
-  const progressPercentage = (parseFloat(project.current_raised) / parseFloat(project.target_amount)) * 100;
+  const progressPercentage = (project.raised_amount / project.target_amount) * 100;
   const daysLeft = Math.ceil((new Date(project.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
   
   const getRiskColor = (risk: string) => {
@@ -20,17 +21,31 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'ACTIVE': return 'bg-green-100 text-green-800';
+      case 'COMPLETED': return 'bg-blue-100 text-blue-800';
+      case 'CANCELLED': return 'bg-red-100 text-red-800';
+      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
-      <div className="aspect-video relative overflow-hidden">
-        <img 
-          src={project.image_url || 'https://images.pexels.com/photos/9875416/pexels-photo-9875416.jpeg?auto=compress&cs=tinysrgb&w=800'} 
-          alt={project.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+      <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-4xl font-bold text-blue-600 mb-2">{project.symbol}</div>
+            <div className="text-sm text-gray-600">{project.category}</div>
+          </div>
+        </div>
         <div className="absolute top-4 right-4 flex space-x-2">
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskColor(project.risk_level)}`}>
             {project.risk_level} Risk
+          </span>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+            {project.status}
           </span>
         </div>
       </div>
@@ -40,10 +55,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-1">{project.name}</h3>
             <p className="text-sm text-blue-600 font-medium">{project.symbol} • {project.category}</p>
+            <p className="text-xs text-gray-500">by {project.owner_name}</p>
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-500">Token Price</p>
-            <p className="text-lg font-bold text-gray-900">€{parseFloat(project.price_per_token).toFixed(2)}</p>
+            <p className="text-lg font-bold text-gray-900">€{project.price_per_token.toFixed(2)}</p>
           </div>
         </div>
         
@@ -54,7 +70,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-gray-600">Progress</span>
               <span className="text-sm font-medium text-gray-900">
-                €{parseFloat(project.current_raised).toLocaleString()} / €{parseFloat(project.target_amount).toLocaleString()}
+                €{project.raised_amount.toLocaleString()} / €{project.target_amount.toLocaleString()}
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
@@ -67,7 +83,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
               <span className="text-xs text-gray-500">{progressPercentage.toFixed(1)}% funded</span>
               <span className="text-xs text-gray-500 flex items-center">
                 <Calendar className="h-3 w-3 mr-1" />
-                {daysLeft} days left
+                {daysLeft > 0 ? `${daysLeft} days left` : 'Ended'}
               </span>
             </div>
           </div>
@@ -96,12 +112,30 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
             </div>
           </div>
         </div>
+
+        {project.token_contract_address && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-600">Token Contract</span>
+              <a 
+                href={apiService.getPolygonscanUrl(project.token_contract_address)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:text-blue-800 flex items-center"
+              >
+                View <ExternalLink className="h-3 w-3 ml-1" />
+              </a>
+            </div>
+            <p className="text-xs text-gray-800 font-mono truncate">{project.token_contract_address}</p>
+          </div>
+        )}
         
         <button 
           onClick={() => onSelect(project)}
-          className="w-full mt-6 bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          disabled={project.status !== 'ACTIVE'}
+          className="w-full mt-6 bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Invest Now
+          {project.status === 'ACTIVE' ? 'Invest Now' : project.status}
         </button>
       </div>
     </div>

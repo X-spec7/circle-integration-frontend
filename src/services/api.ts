@@ -1,14 +1,30 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001/api/v1';
+import { 
+  ApiResponse, 
+  LoginRequest, 
+  RegisterRequest, 
+  LoginResponse, 
+  User, 
+  Project, 
+  ProjectsListResponse,
+  CreateProjectRequest,
+  UpdateProjectRequest,
+  ProjectDeploymentResponse,
+  EscrowAddressResponse,
+  PaymentInitiationRequest,
+  CryptoPaymentRequest,
+  PaymentResponse,
+  CryptoPaymentResponse,
+  InvestmentsResponse,
+  ErrorResponse
+} from '../types';
+import { config } from '../config/env';
 
-interface ApiResponse<T> {
-  data?: T;
-  error?: string;
-  message?: string;
-}
+const API_BASE_URL = config.API_BASE_URL;
+const POLYGONSCAN_URL = config.POLYGONSCAN_URL;
 
 class ApiService {
   private getAuthHeaders(): HeadersInit {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('access_token');
     return {
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
@@ -27,7 +43,7 @@ class ApiService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData: ErrorResponse = await response.json().catch(() => ({ detail: 'Unknown error', error_code: 'UNKNOWN_ERROR' }));
         throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
       }
 
@@ -39,55 +55,31 @@ class ApiService {
   }
 
   // Authentication endpoints
-  async register(userData: {
-    email: string;
-    username: string;
-    password: string;
-    name: string;
-    user_type: 'investor' | 'sme';
-    company?: string;
-  }): Promise<ApiResponse<any>> {
-    return this.request('/auth/register', {
+  async register(userData: RegisterRequest): Promise<ApiResponse<User>> {
+    return this.request<User>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
   }
 
-  async login(credentials: { username: string; password: string }): Promise<ApiResponse<any>> {
-    const formData = new FormData();
-    formData.append('username', credentials.username);
-    formData.append('password', credentials.password);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return { data };
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : 'Unknown error' };
-    }
+  async login(credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> {
+    return this.request<LoginResponse>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
   }
 
-  async getCurrentUser(): Promise<ApiResponse<any>> {
-    return this.request('/users/me');
+  async getCurrentUser(): Promise<ApiResponse<User>> {
+    return this.request<User>('/users/me');
   }
 
   // Project endpoints
   async getProjects(params?: {
     status?: string;
     category?: string;
-    risk_level?: string;
-    skip?: number;
     limit?: number;
-  }): Promise<ApiResponse<any[]>> {
+    offset?: number;
+  }): Promise<ApiResponse<ProjectsListResponse>> {
     const queryParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -98,94 +90,79 @@ class ApiService {
     }
     
     const endpoint = `/projects/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    return this.request(endpoint);
+    return this.request<ProjectsListResponse>(endpoint);
   }
 
-  async getProject(id: string): Promise<ApiResponse<any>> {
-    return this.request(`/projects/${id}`);
+  async getProject(id: string): Promise<ApiResponse<Project>> {
+    return this.request<Project>(`/projects/${id}`);
   }
 
-  async createProject(projectData: any): Promise<ApiResponse<any>> {
-    return this.request('/projects/', {
+  async createProject(projectData: CreateProjectRequest): Promise<ApiResponse<ProjectDeploymentResponse>> {
+    return this.request<ProjectDeploymentResponse>('/projects/', {
       method: 'POST',
       body: JSON.stringify(projectData),
     });
   }
 
-  async updateProject(id: string, projectData: any): Promise<ApiResponse<any>> {
-    return this.request(`/projects/${id}`, {
+  async updateProject(id: string, projectData: UpdateProjectRequest): Promise<ApiResponse<Project>> {
+    return this.request<Project>(`/projects/${id}`, {
       method: 'PUT',
       body: JSON.stringify(projectData),
     });
   }
 
-  async deleteProject(id: string): Promise<ApiResponse<any>> {
-    return this.request(`/projects/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  async getUserProjects(): Promise<ApiResponse<any[]>> {
-    return this.request('/projects/user/projects');
+  async getProjectEscrowAddress(projectId: string): Promise<ApiResponse<EscrowAddressResponse>> {
+    return this.request<EscrowAddressResponse>(`/projects/${projectId}/escrow-address`);
   }
 
   // Payment endpoints
-  async initiatePayment(paymentData: {
-    project_id: string;
-    amount: number;
-    payment_method: 'fiat' | 'crypto';
-  }): Promise<ApiResponse<any>> {
-    return this.request('/payments/initiate', {
+  async initiatePayment(paymentData: PaymentInitiationRequest): Promise<ApiResponse<PaymentResponse>> {
+    return this.request<PaymentResponse>('/payments/initiate', {
       method: 'POST',
       body: JSON.stringify(paymentData),
     });
   }
 
-  async initiateCryptoPayment(paymentData: {
-    project_id: string;
-    amount: number;
-    wallet_address: string;
-    currency: string;
-  }): Promise<ApiResponse<any>> {
-    return this.request('/payments/crypto', {
+  async initiateCryptoPayment(paymentData: CryptoPaymentRequest): Promise<ApiResponse<CryptoPaymentResponse>> {
+    return this.request<CryptoPaymentResponse>('/payments/crypto', {
       method: 'POST',
       body: JSON.stringify(paymentData),
     });
   }
 
-  async getPaymentStatus(paymentId: string): Promise<ApiResponse<any>> {
-    return this.request(`/payments/${paymentId}/status`);
+  async getPaymentStatus(paymentId: string): Promise<ApiResponse<PaymentResponse>> {
+    return this.request<PaymentResponse>(`/payments/${paymentId}/status`);
   }
 
-  async confirmPayment(confirmationData: {
-    payment_id: string;
-    transaction_id: string;
-  }): Promise<ApiResponse<any>> {
-    return this.request('/payments/confirm', {
-      method: 'POST',
-      body: JSON.stringify(confirmationData),
-    });
+  async getUserInvestments(): Promise<ApiResponse<InvestmentsResponse>> {
+    return this.request<InvestmentsResponse>('/payments/investments');
   }
 
-  async getUserInvestments(params?: {
-    skip?: number;
-    limit?: number;
-  }): Promise<ApiResponse<any[]>> {
-    const queryParams = new URLSearchParams();
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          queryParams.append(key, value.toString());
-        }
-      });
+  // Utility methods
+  getPolygonscanUrl(address: string): string {
+    return `${POLYGONSCAN_URL}/address/${address}`;
+  }
+
+  getPolygonscanTxUrl(txHash: string): string {
+    return `${POLYGONSCAN_URL}/tx/${txHash}`;
+  }
+
+  // Legacy methods for backward compatibility
+  async getUserProjects(): Promise<ApiResponse<Project[]>> {
+    // This endpoint might not exist in the new API, so we'll filter from all projects
+    const response = await this.getProjects();
+    if (response.data) {
+      // Filter projects owned by current user (this would need to be implemented based on user context)
+      return { data: response.data.projects };
     }
-    
-    const endpoint = `/payments/investments${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    return this.request(endpoint);
+    return { error: response.error || 'Failed to fetch user projects' };
   }
 
-  async getInvestmentDetails(investmentId: string): Promise<ApiResponse<any>> {
-    return this.request(`/payments/investments/${investmentId}`);
+  async deleteProject(id: string): Promise<ApiResponse<unknown>> {
+    // This endpoint might not exist in the new API
+    return this.request<unknown>(`/projects/${id}`, {
+      method: 'DELETE',
+    });
   }
 }
 

@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { TokenProject } from '../types';
+import { Project } from '../types';
 import { apiService } from '../services/api';
 import ProjectCard from './ProjectCard';
 import ProjectModal from './ProjectModal';
 import { Search, Filter, TrendingUp, DollarSign, Users, Target, Loader } from 'lucide-react';
 
 const Dashboard = () => {
-  const [selectedProject, setSelectedProject] = useState<TokenProject | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [projects, setProjects] = useState<TokenProject[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,14 +20,14 @@ const Dashboard = () => {
   const loadProjects = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getProjects({ status: 'active' });
+      const response = await apiService.getProjects({ status: 'ACTIVE' });
       
       if (response.error) {
         setError(response.error);
       } else if (response.data) {
-        setProjects(response.data);
+        setProjects(response.data.projects);
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load projects');
     } finally {
       setLoading(false);
@@ -43,8 +43,8 @@ const Dashboard = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const totalRaised = projects.reduce((sum, project) => sum + parseFloat(project.current_raised), 0);
-  const activeProjects = projects.filter(p => p.status === 'active').length;
+  const totalRaised = projects.reduce((sum, project) => sum + project.raised_amount, 0);
+  const activeProjects = projects.filter(p => p.status === 'ACTIVE').length;
   const totalInvestors = 1247; // Mock data - could be fetched from API
 
   if (loading) {
