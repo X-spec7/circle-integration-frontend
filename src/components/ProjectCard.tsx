@@ -34,7 +34,20 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
       <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="absolute inset-0 flex items-center justify-center">
+        {project.image_url ? (
+          <img 
+            src={project.image_url} 
+            alt={project.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              // Fallback to default if image fails to load
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              target.nextElementSibling?.classList.remove('hidden');
+            }}
+          />
+        ) : null}
+        <div className={`absolute inset-0 flex items-center justify-center ${project.image_url ? 'hidden' : ''}`}>
           <div className="text-center">
             <div className="text-4xl font-bold text-blue-600 mb-2">{project.symbol}</div>
             <div className="text-sm text-gray-600">{project.category}</div>
@@ -127,6 +140,34 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
               </a>
             </div>
             <p className="text-xs text-gray-800 font-mono truncate">{project.token_contract_address}</p>
+          </div>
+        )}
+
+        {/* Optional Documents */}
+        {(project.business_plan_url || project.whitepaper_url) && (
+          <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+            <div className="flex flex-wrap gap-2">
+              {project.business_plan_url && (
+                <a 
+                  href={project.business_plan_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-600 hover:text-blue-800 flex items-center bg-white px-2 py-1 rounded border"
+                >
+                  Business Plan <ExternalLink className="h-3 w-3 ml-1" />
+                </a>
+              )}
+              {project.whitepaper_url && (
+                <a 
+                  href={project.whitepaper_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-600 hover:text-blue-800 flex items-center bg-white px-2 py-1 rounded border"
+                >
+                  Whitepaper <ExternalLink className="h-3 w-3 ml-1" />
+                </a>
+              )}
+            </div>
           </div>
         )}
         

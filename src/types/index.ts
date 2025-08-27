@@ -53,6 +53,9 @@ export interface Project {
   escrow_contract_address: string;
   token_deployment_tx: string;
   escrow_deployment_tx: string;
+  image_url?: string;
+  business_plan_url?: string;
+  whitepaper_url?: string;
   created_at: string;
   updated_at: string;
 }
@@ -76,6 +79,9 @@ export interface CreateProjectRequest {
   total_supply: number;
   end_date: string;
   risk_level: 'Low' | 'Medium' | 'High';
+  image_url?: string;
+  business_plan_url?: string;
+  whitepaper_url?: string;
 }
 
 export interface UpdateProjectRequest {

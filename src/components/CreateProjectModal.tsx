@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { X, Upload, Calendar, DollarSign, Target, FileText, Image, Building2 } from 'lucide-react';
-import { ProjectFormData } from '../types';
+import { X, Calendar, DollarSign, Target, FileText, Image, Building2 } from 'lucide-react';
+import { CreateProjectRequest } from '../types';
 import { apiService } from '../services/api';
 
 interface CreateProjectModalProps {
@@ -13,7 +13,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<ProjectFormData>({
+  const [formData, setFormData] = useState<CreateProjectRequest>({
     name: '',
     symbol: '',
     description: '',
@@ -23,6 +23,9 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
     total_supply: 0,
     end_date: '',
     risk_level: 'Medium',
+    image_url: '',
+    business_plan_url: '',
+    whitepaper_url: '',
   });
 
   if (!isOpen) return null;
@@ -50,24 +53,22 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
     }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: keyof ProjectFormData) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFormData(prev => ({
-        ...prev,
-        [fieldName]: file
-      }));
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Only submit if we're on step 3
+    if (currentStep !== 3) {
+      console.log('Form submission prevented - not on step 3, current step:', currentStep);
+      return;
+    }
+    
+    console.log('Submitting project creation on step 3');
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // Prepare project data for API
-      const projectData = {
+      // Prepare project data for API - only include optional fields if they have values
+      const projectData: CreateProjectRequest = {
         name: formData.name,
         symbol: formData.symbol.toUpperCase(),
         description: formData.description,
@@ -77,9 +78,9 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
         total_supply: formData.total_supply,
         end_date: formData.end_date,
         risk_level: formData.risk_level,
-        image_url: formData.image_url || '',
-        business_plan_url: formData.business_plan_url || '',
-        whitepaper_url: formData.whitepaper_url || '',
+        ...(formData.image_url && { image_url: formData.image_url }),
+        ...(formData.business_plan_url && { business_plan_url: formData.business_plan_url }),
+        ...(formData.whitepaper_url && { whitepaper_url: formData.whitepaper_url }),
       };
 
       const response = await apiService.createProject(projectData);
@@ -101,6 +102,9 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
           total_supply: 0,
           end_date: '',
           risk_level: 'Medium',
+          image_url: '',
+          business_plan_url: '',
+          whitepaper_url: '',
         });
         setCurrentStep(1);
         
@@ -118,16 +122,38 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
     }
   };
 
-  const nextStep = () => {
-    if (currentStep < 3) setCurrentStep(currentStep + 1);
+  const nextStep = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    console.log('Next button clicked, current step:', currentStep);
+    if (currentStep < 3) {
+      setCurrentStep(currentStep + 1);
+      console.log('Moving to step:', currentStep + 1);
+    }
   };
 
-  const prevStep = () => {
+  const prevStep = (e?: React.MouseEvent) => {
+    e?.preventDefault();
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
   const isStep1Valid = formData.name && formData.symbol && formData.description && formData.category;
   const isStep2Valid = formData.target_amount > 0 && formData.price_per_token > 0 && formData.total_supply > 0 && formData.end_date;
+  
+  console.log('Step validation:', { 
+    step1: isStep1Valid, 
+    step2: isStep2Valid, 
+    currentStep,
+    formData: {
+      name: formData.name,
+      symbol: formData.symbol,
+      description: formData.description,
+      category: formData.category,
+      target_amount: formData.target_amount,
+      price_per_token: formData.price_per_token,
+      total_supply: formData.total_supply,
+      end_date: formData.end_date
+    }
+  });
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -204,10 +230,10 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                     onChange={handleInputChange}
                     className="px-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
                     placeholder="e.g., GTS"
-                    maxLength={5}
+                    maxLength={10}
                     required
                   />
-                  <p className="text-xs text-gray-500 mt-1">3-5 characters, will be converted to uppercase</p>
+                  <p className="text-xs text-gray-500 mt-1">3-10 characters, will be converted to uppercase</p>
                 </div>
 
                 <div>
@@ -239,9 +265,10 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                     rows={4}
                     className="px-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Describe your project, its goals, and value proposition..."
+                    minLength={10}
                     required
                   />
-                  <p className="text-xs text-gray-500 mt-1">Minimum 100 characters</p>
+                  <p className="text-xs text-gray-500 mt-1">Minimum 10 characters</p>
                 </div>
               </div>
             )}
@@ -265,7 +292,8 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                         onChange={handleInputChange}
                         className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="1000000"
-                        min="1000"
+                        min="0.01"
+                        step="0.01"
                         required
                       />
                     </div>
@@ -316,12 +344,12 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                     <div className="relative">
                       <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                       <input
-                        type="date"
+                        type="datetime-local"
                         name="end_date"
                         value={formData.end_date}
                         onChange={handleInputChange}
                         className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        min={new Date().toISOString().split('T')[0]}
+                        min={new Date().toISOString().slice(0, 16)}
                         required
                       />
                     </div>
@@ -347,10 +375,11 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
               </div>
             )}
 
-            {/* Step 3: Documents & Media */}
+            {/* Step 3: Documents & Media (Optional) */}
             {currentStep === 3 && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Documents & Media</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Documents & Media (Optional)</h3>
+                <p className="text-sm text-gray-600 mb-4">These fields are optional. You can add them later or skip this step.</p>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -358,7 +387,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                   </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                     <Image className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">Enter image URL</p>
+                    <p className="text-sm text-gray-600 mb-2">Enter image URL (optional)</p>
                     <input
                       type="url"
                       name="image_url"
@@ -376,7 +405,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                   </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                     <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">Enter business plan URL</p>
+                    <p className="text-sm text-gray-600 mb-2">Enter business plan URL (optional)</p>
                     <input
                       type="url"
                       name="business_plan_url"
@@ -394,7 +423,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                   </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                     <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">Enter whitepaper URL</p>
+                    <p className="text-sm text-gray-600 mb-2">Enter whitepaper URL (optional)</p>
                     <input
                       type="url"
                       name="whitepaper_url"
