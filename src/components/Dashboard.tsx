@@ -1,47 +1,79 @@
 import React, { useState, useEffect } from 'react';
 import { Project } from '../types';
-import { apiService } from '../services/api';
+import { useProjects } from '../contexts/ProjectsContext';
 import ProjectCard from './ProjectCard';
-import ProjectModal from './ProjectModal';
 import { Search, Filter, TrendingUp, DollarSign, Users, Target, Loader } from 'lucide-react';
 
 const Dashboard = () => {
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadProjects();
-  }, []);
-
-  const loadProjects = async () => {
-    try {
-      setLoading(true);
-      const response = await apiService.getProjects({ status: 'ACTIVE' });
-      
-      if (response.error) {
-        setError(response.error);
-      } else if (response.data) {
-        setProjects(response.data.projects);
-      }
-    } catch {
-      setError('Failed to load projects');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const categories = ['All', ...new Set(projects.map(p => p.category))];
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [renderError, setRenderError] = useState<string | null>(null);
   
-  const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || project.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const { 
+    projects, 
+    loading, 
+    error, 
+    total, 
+    loadProjects, 
+    refreshProjects, 
+    clearError 
+  } = useProjects();
+
+  console.log('Dashboard render:', { 
+    projectsCount: projects.length, 
+    loading, 
+    error, 
+    searchTerm, 
+    selectedCategory,
+    projects: projects
   });
+
+  // Error boundary for rendering
+  if (renderError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h3 className="text-lg font-medium text-red-600 mb-2">Dashboard Error</h3>
+          <p className="text-gray-600 mb-4">{renderError}</p>
+          <button
+            onClick={() => setRenderError(null)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Debounce search term to avoid too many API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Load projects when filters change
+  useEffect(() => {
+    const filters: any = {};
+    
+    if (selectedCategory !== 'All') {
+      filters.category = selectedCategory;
+    }
+    
+    if (debouncedSearchTerm) {
+      filters.search = debouncedSearchTerm;
+    }
+    
+    console.log('Loading projects with filters:', filters);
+    loadProjects(filters);
+  }, [selectedCategory, debouncedSearchTerm, loadProjects]);
+
+  // Get unique categories from projects
+  const categories = ['All', ...new Set(projects.map(p => p.category))];
 
   const totalRaised = projects.reduce((sum, project) => sum + project.raised_amount, 0);
   const activeProjects = projects.filter(p => p.status === 'ACTIVE').length;
@@ -68,7 +100,7 @@ const Dashboard = () => {
           <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading projects</h3>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
-            onClick={loadProjects}
+            onClick={refreshProjects}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Try Again
@@ -78,10 +110,11 @@ const Dashboard = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Stats Section */}
-      <div className="bg-white border-b border-gray-200">
+  try {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Stats Section */}
+        <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl">
@@ -172,16 +205,15 @@ const Dashboard = () => {
 
         {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map(project => (
+          {projects.map(project => (
             <ProjectCard
               key={project.id}
               project={project}
-              onSelect={setSelectedProject}
             />
           ))}
         </div>
 
-        {filteredProjects.length === 0 && (
+        {projects.length === 0 && !loading && (
           <div className="text-center py-12">
             <div className="bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
               <Search className="h-8 w-8 text-gray-400" />
@@ -192,15 +224,27 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Project Modal */}
-      {selectedProject && (
-        <ProjectModal
-          project={selectedProject}
-          onClose={() => setSelectedProject(null)}
-        />
-      )}
+
     </div>
   );
+  } catch (error) {
+    console.error('Dashboard rendering error:', error);
+    setRenderError(error instanceof Error ? error.message : 'Unknown rendering error');
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h3 className="text-lg font-medium text-red-600 mb-2">Dashboard Error</h3>
+          <p className="text-gray-600 mb-4">Something went wrong rendering the dashboard.</p>
+          <button
+            onClick={() => setRenderError(null)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 };
 
 export default Dashboard;

@@ -37,19 +37,27 @@ class ApiService {
   ): Promise<ApiResponse<T>> {
     try {
       const url = `${API_BASE_URL}${endpoint}`;
+      console.log('API Request:', { url, options });
+      
       const response = await fetch(url, {
         ...options,
         headers: this.getAuthHeaders(),
       });
 
+      console.log('API Response status:', response.status);
+      console.log('API Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
         const errorData: ErrorResponse = await response.json().catch(() => ({ detail: 'Unknown error', error_code: 'UNKNOWN_ERROR' }));
+        console.error('API Error response:', errorData);
         throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('API Response data:', data);
       return { data };
     } catch (error) {
+      console.error('API Request error:', error);
       return { error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
@@ -94,7 +102,10 @@ class ApiService {
   }
 
   async getProject(id: string): Promise<ApiResponse<Project>> {
-    return this.request<Project>(`/projects/${id}`);
+    console.log('API: Getting project with ID:', id);
+    const response = await this.request<Project>(`/projects/${id}`);
+    console.log('API: getProject response:', response);
+    return response;
   }
 
   async createProject(projectData: CreateProjectRequest): Promise<ApiResponse<ProjectDeploymentResponse>> {

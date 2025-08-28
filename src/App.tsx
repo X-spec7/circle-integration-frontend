@@ -1,20 +1,20 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Coins } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ProjectsProvider } from './contexts/ProjectsContext';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import SMEDashboard from './components/SMEDashboard';
-import AuthModal from './components/AuthModal';
+import ProjectDetail from './components/ProjectDetail';
+import Login from './components/Login';
+import Register from './components/Register';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const AppContent = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [showAuthModal, setShowAuthModal] = React.useState(false);
 
-  React.useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setShowAuthModal(true);
-    }
-  }, [isLoading, isAuthenticated]);
+  console.log('AppContent render:', { user, isAuthenticated, isLoading, location: window.location.pathname });
 
   if (isLoading) {
     return (
@@ -29,44 +29,63 @@ const AppContent = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="bg-blue-600 p-4 rounded-full w-16 h-16 mx-auto mb-6">
-              <Coins className="h-8 w-8 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">FundRaise</h1>
-            <p className="text-gray-600 mb-8">Token Investment Platform</p>
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
-              Get Started
-            </button>
-          </div>
+      <Router>
+        <div className="min-h-screen bg-gray-50">
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
         </div>
-        <AuthModal
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-        />
-      </div>
+      </Router>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      {user?.user_type === 'sme' ? <SMEDashboard /> : <Dashboard />}
-    </div>
+    <Router>
+      <ProjectsProvider>
+        <div className="min-h-screen bg-gray-50">
+          <Header />
+          <Routes>
+            <Route path="/" element={
+              <ProtectedRoute>
+                {user?.user_type === 'sme' ? <SMEDashboard /> : <Dashboard />}
+              </ProtectedRoute>
+            } />
+            <Route path="/project/:id" element={
+              <ProtectedRoute>
+                <ProjectDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </ProjectsProvider>
+    </Router>
   );
 };
 
 function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
+  console.log('App component rendering');
+  
+  try {
+    return (
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    );
+  } catch (error) {
+    console.error('Error rendering App:', error);
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">App Error</h1>
+          <p className="text-gray-600">Something went wrong loading the application.</p>
+          <pre className="mt-4 text-sm text-gray-500">{error instanceof Error ? error.message : 'Unknown error'}</pre>
+        </div>
+      </div>
+    );
+  }
 }
 
 export default App;

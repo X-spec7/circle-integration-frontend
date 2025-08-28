@@ -1,14 +1,15 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Project } from '../types';
 import { TrendingUp, Calendar, Shield, Target, ExternalLink } from 'lucide-react';
 import { apiService } from '../services/api';
 
 interface ProjectCardProps {
   project: Project;
-  onSelect: (project: Project) => void;
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
+const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
+  const navigate = useNavigate();
   const progressPercentage = (project.raised_amount / project.target_amount) * 100;
   const daysLeft = Math.ceil((new Date(project.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
   
@@ -172,7 +173,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
         )}
         
         <button 
-          onClick={() => onSelect(project)}
+          onClick={() => navigate(`/project/${project.id}`)}
           disabled={project.status !== 'ACTIVE'}
           className="w-full mt-6 bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >

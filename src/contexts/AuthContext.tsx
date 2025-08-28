@@ -25,11 +25,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading: true,
   });
 
+  console.log('AuthProvider render:', authState);
+
   useEffect(() => {
+    console.log('AuthContext useEffect: Checking for existing session');
     // Check for existing session
     const token = localStorage.getItem('access_token');
+    console.log('AuthContext: Token found:', !!token);
     if (token) {
       // Verify token by getting current user
+      console.log('AuthContext: Verifying token...');
       apiService.getCurrentUser().then((response) => {
         if (response.data) {
           setAuthState({

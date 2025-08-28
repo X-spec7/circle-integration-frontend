@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Coins, User, Bell, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -9,7 +10,7 @@ const Header = () => {
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
             <div className="bg-blue-600 p-2 rounded-lg">
               <Coins className="h-6 w-6 text-white" />
             </div>
@@ -17,7 +18,7 @@ const Header = () => {
               <h1 className="text-xl font-bold text-gray-900">FundRaise</h1>
               <p className="text-xs text-gray-500">Token Investment Platform</p>
             </div>
-          </div>
+          </Link>
           
           <div className="flex items-center space-x-4">
             <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
@@ -39,7 +40,7 @@ const Header = () => {
                 <p className="text-gray-500">
                   {user?.user_type === 'investor' 
                     ? 'Investor Account'
-                    : user?.company || 'SME Account'
+                    : 'SME Account'
                   }
                 </p>
               </div>
