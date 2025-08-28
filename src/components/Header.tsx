@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Coins, User, Bell, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { triggerTokenExpiration } from '../utils/tokenUtils';
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -22,16 +21,6 @@ const Header = () => {
           </Link>
           
           <div className="flex items-center space-x-4">
-            {/* Development test button - only show in development */}
-            {import.meta.env.DEV && (
-              <button
-                onClick={triggerTokenExpiration}
-                className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                title="Test Token Expiration"
-              >
-                Test Token Exp
-              </button>
-            )}
             <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
               <Bell className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
