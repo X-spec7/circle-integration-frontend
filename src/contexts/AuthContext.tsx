@@ -32,6 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check for existing session
     const token = localStorage.getItem('access_token');
     console.log('AuthContext: Token found:', !!token);
+    console.log('AuthContext: Current auth state:', authState);
     if (token) {
       // Verify token by getting current user
       console.log('AuthContext: Verifying token...');
@@ -63,6 +64,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       setAuthState(prev => ({ ...prev, isLoading: false }));
     }
+
+    // Listen for token expiration events
+    const handleTokenExpired = () => {
+      console.log('AuthContext: Token expired event received');
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+    };
+
+    window.addEventListener('tokenExpired', handleTokenExpired);
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('tokenExpired', handleTokenExpired);
+    };
   }, []);
 
   const login = async (username: string, password: string) => {
@@ -135,6 +153,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  console.log('AuthProvider rendering with state:', authState);
+  
   return (
     <AuthContext.Provider value={{
       ...authState,

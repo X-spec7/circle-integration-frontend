@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Coins, User, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,8 +11,22 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [tokenExpiredMessage, setTokenExpiredMessage] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  console.log('Login component rendering');
+
+  // Check if user was redirected due to token expiration
+  useEffect(() => {
+    console.log('Login useEffect running');
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenExpired = urlParams.get('tokenExpired');
+    console.log('Token expired param:', tokenExpired);
+    if (tokenExpired === 'true') {
+      setTokenExpiredMessage('Your session has expired. Please log in again.');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +50,8 @@ const Login = () => {
     }));
   };
 
+  console.log('Login component about to render');
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
@@ -51,6 +67,12 @@ const Login = () => {
         {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Welcome Back</h2>
+
+          {tokenExpiredMessage && (
+            <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+              <p className="text-sm text-orange-800">{tokenExpiredMessage}</p>
+            </div>
+          )}
 
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">

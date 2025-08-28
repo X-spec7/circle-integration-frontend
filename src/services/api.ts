@@ -50,6 +50,17 @@ class ApiService {
       if (!response.ok) {
         const errorData: ErrorResponse = await response.json().catch(() => ({ detail: 'Unknown error', error_code: 'UNKNOWN_ERROR' }));
         console.error('API Error response:', errorData);
+        
+        // Handle 401 Unauthorized errors
+        if (response.status === 401) {
+          console.log('Token expired, redirecting to login');
+          // Clear the expired token
+          localStorage.removeItem('access_token');
+          // Dispatch a custom event to notify the app about token expiration
+          window.dispatchEvent(new CustomEvent('tokenExpired'));
+          throw new Error('Token expired. Please log in again.');
+        }
+        
         throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
       }
 

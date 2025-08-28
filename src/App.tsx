@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Coins } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ProjectsProvider } from './contexts/ProjectsContext';
+import { useTokenExpiration } from './hooks/useTokenExpiration';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import SMEDashboard from './components/SMEDashboard';
@@ -10,9 +11,19 @@ import ProjectDetail from './components/ProjectDetail';
 import Login from './components/Login';
 import Register from './components/Register';
 import ProtectedRoute from './components/ProtectedRoute';
+import Toast from './components/Toast';
 
 const AppContent = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'error' | 'warning' | 'success';
+    isVisible: boolean;
+  }>({
+    message: '',
+    type: 'warning',
+    isVisible: false,
+  });
 
   console.log('AppContent render:', { user, isAuthenticated, isLoading, location: window.location.pathname });
 
@@ -27,24 +38,46 @@ const AppContent = () => {
     );
   }
 
-  if (!isAuthenticated) {
-    return (
-      <Router>
-        <div className="min-h-screen bg-gray-50">
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </div>
-      </Router>
-    );
-  }
-
   return (
     <Router>
-      <ProjectsProvider>
-        <div className="min-h-screen bg-gray-50">
+      <AppContentWithRouter 
+        user={user} 
+        isAuthenticated={isAuthenticated} 
+        toast={toast}
+        setToast={setToast}
+      />
+    </Router>
+  );
+};
+
+// Separate component that can use Router hooks
+const AppContentWithRouter = ({ 
+  user, 
+  isAuthenticated, 
+  toast, 
+  setToast 
+}: {
+  user: any;
+  isAuthenticated: boolean;
+  toast: { message: string; type: 'error' | 'warning' | 'success'; isVisible: boolean };
+  setToast: React.Dispatch<React.SetStateAction<{ message: string; type: 'error' | 'warning' | 'success'; isVisible: boolean }>>;
+}) => {
+  console.log('AppContentWithRouter render:', { isAuthenticated, user: user?.user_type });
+  
+  // Handle token expiration redirects - now inside Router context
+  useTokenExpiration(() => {
+    console.log('Token expiration callback triggered');
+    setToast({
+      message: 'Your session has expired. Please log in again.',
+      type: 'warning',
+      isVisible: true,
+    });
+  });
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {isAuthenticated ? (
+        <ProjectsProvider>
           <Header />
           <Routes>
             <Route path="/" element={
@@ -59,9 +92,22 @@ const AppContent = () => {
             } />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </div>
-      </ProjectsProvider>
-    </Router>
+        </ProjectsProvider>
+      ) : (
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      )}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+        duration={3000}
+      />
+    </div>
   );
 };
 
