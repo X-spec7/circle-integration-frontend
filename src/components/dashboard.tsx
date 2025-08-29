@@ -25,14 +25,7 @@ export default function Dashboard() {
     clearError 
   } = useProjects();
 
-  console.log('Dashboard render:', { 
-    projectsCount: projects.length, 
-    loading, 
-    error, 
-    searchTerm, 
-    selectedCategory,
-    projects: projects
-  });
+
 
   // Debounce search term to avoid too many API calls
   useEffect(() => {

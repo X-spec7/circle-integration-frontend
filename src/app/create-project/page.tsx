@@ -54,11 +54,8 @@ export default function CreateProjectPage() {
     
     // Only submit if we're on step 3
     if (currentStep !== 3) {
-      console.log('Form submission prevented - not on step 3, current step:', currentStep);
       return;
     }
-    
-    console.log('Submitting project creation on step 3');
     setIsSubmitting(true);
     setError(null);
 
@@ -98,10 +95,8 @@ export default function CreateProjectPage() {
 
   const nextStep = (e?: React.MouseEvent) => {
     e?.preventDefault();
-    console.log('Next button clicked, current step:', currentStep);
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
-      console.log('Moving to step:', currentStep + 1);
     }
   };
 
@@ -112,22 +107,6 @@ export default function CreateProjectPage() {
 
   const isStep1Valid = formData.name && formData.symbol && formData.description && formData.category;
   const isStep2Valid = formData.target_amount > 0 && formData.price_per_token > 0 && formData.total_supply > 0 && formData.end_date;
-  
-  console.log('Step validation:', { 
-    step1: isStep1Valid, 
-    step2: isStep2Valid, 
-    currentStep,
-    formData: {
-      name: formData.name,
-      symbol: formData.symbol,
-      description: formData.description,
-      category: formData.category,
-      target_amount: formData.target_amount,
-      price_per_token: formData.price_per_token,
-      total_supply: formData.total_supply,
-      end_date: formData.end_date
-    }
-  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -136,7 +115,7 @@ export default function CreateProjectPage() {
         <div className="mb-8">
           <button
             onClick={() => router.back()}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+            className="flex items-center text-gray-600 hover:text-gray-900 mb-4 cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard

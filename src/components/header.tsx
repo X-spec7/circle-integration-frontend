@@ -23,7 +23,7 @@ export default function Header() {
           </Link>
           
           <div className="flex items-center space-x-4">
-            <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+            <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
               <Bell className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
             </button>
@@ -48,7 +48,7 @@ export default function Header() {
               </div>
               <button
                 onClick={logout}
-                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                 title="Logout"
               >
                 <LogOut className="h-4 w-4" />

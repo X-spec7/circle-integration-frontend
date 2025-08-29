@@ -134,7 +134,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, userType: 'investor' }))}
-                  className={`p-3 border-2 rounded-lg transition-colors ${
+                  className={`p-3 border-2 rounded-lg transition-colors cursor-pointer ${
                     formData.userType === 'investor'
                       ? 'border-blue-500 bg-blue-50 text-blue-700'
                       : 'border-gray-200 hover:border-gray-300'
@@ -146,7 +146,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, userType: 'sme' }))}
-                  className={`p-3 border-2 rounded-lg transition-colors ${
+                  className={`p-3 border-2 rounded-lg transition-colors cursor-pointer ${
                     formData.userType === 'sme'
                       ? 'border-blue-500 bg-blue-50 text-blue-700'
                       : 'border-gray-200 hover:border-gray-300'
@@ -176,7 +176,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>

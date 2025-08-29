@@ -179,12 +179,12 @@ export default function SMEDashboard() {
                 
                 {projects.length > 5 && (
                   <div className="text-center pt-4">
-                    <button
-                      onClick={() => router.push('/')}
-                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                    >
-                      View all {projects.length} projects
-                    </button>
+                                    <button
+                  onClick={() => router.push('/')}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium cursor-pointer"
+                >
+                  View all {projects.length} projects
+                </button>
                   </div>
                 )}
               </div>
@@ -208,7 +208,7 @@ export default function SMEDashboard() {
               
               <button
                 onClick={handleViewAnalytics}
-                className="w-full flex items-center p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+                className="w-full flex items-center p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors cursor-pointer"
               >
                 <TrendingUp className="h-5 w-5 text-green-600 mr-3" />
                 <div className="text-left">
@@ -219,7 +219,7 @@ export default function SMEDashboard() {
               
               <button
                 onClick={handleManageInvestors}
-                className="w-full flex items-center p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+                className="w-full flex items-center p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer"
               >
                 <Users className="h-5 w-5 text-purple-600 mr-3" />
                 <div className="text-left">
