@@ -1,126 +1,113 @@
-# Circle Integration Frontend
+# FundRaise - Next.js App
 
-A React-based frontend for the blockchain-enabled investment platform that integrates with Circle payments and Polygon blockchain.
+A modern token investment platform built with Next.js 15, TypeScript, and Tailwind CSS.
 
 ## Features
 
-- **User Authentication**: Register and login with support for investors and SMEs
-- **Project Management**: Create, view, and manage investment projects
-- **Payment Integration**: Support for both fiat (SEPA) and crypto payments via Circle
-- **Blockchain Integration**: View token contracts and transactions on Polygonscan
-- **Real-time Updates**: Monitor payment status and project progress
-- **Responsive Design**: Modern UI built with Tailwind CSS
+- **Authentication**: User registration and login with JWT tokens
+- **Dashboard**: Real-time project statistics and filtering
+- **Investment Platform**: Browse and invest in token projects
+- **SME Dashboard**: Project management for Small and Medium Enterprises
+- **Polygon Integration**: Smart contract deployment and management
+- **Responsive Design**: Mobile-first approach with Tailwind CSS
 
 ## Tech Stack
 
-- **Frontend**: React 18 + TypeScript + Vite
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Icons**: Lucide React
 - **State Management**: React Context API
-- **API Integration**: Fetch API with custom service layer
+- **API**: RESTful API with fetch
 
-## Prerequisites
+## Getting Started
+
+### Prerequisites
 
 - Node.js 18+ 
 - npm or yarn
 - Backend API running on `http://localhost:8000`
 
-## Environment Setup
+### Installation
 
-Create a `.env` file in the root directory:
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd circle-integration-nextjs
+   ```
 
-```env
-VITE_API_BASE_URL=http://localhost:8000
-VITE_POLYGONSCAN_URL=https://polygonscan.com
-```
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-## Installation
+3. **Set up environment variables**
+   Create a `.env.local` file in the root directory:
+   ```env
+   NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
+   NEXT_PUBLIC_POLYGONSCAN_URL=https://polygonscan.com
+   ```
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd circle-integration-frontend
-```
+4. **Run the development server**
+   ```bash
+   npm run dev
+   ```
 
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Start the development server:
-```bash
-npm run dev
-```
-
-The application will be available at `http://localhost:5173`
-
-## API Integration
-
-The frontend integrates with the following backend endpoints:
-
-### Authentication
-- `POST /api/v1/auth/register` - User registration
-- `POST /api/v1/auth/login` - User login
-- `GET /api/v1/users/me` - Get current user
-
-### Projects
-- `GET /api/v1/projects/` - List projects with filtering
-- `GET /api/v1/projects/{id}` - Get project details
-- `POST /api/v1/projects/` - Create new project (SME only)
-- `PUT /api/v1/projects/{id}` - Update project (owner only)
-- `GET /api/v1/projects/{id}/escrow-address` - Get project escrow address
-
-### Payments
-- `POST /api/v1/payments/initiate` - Initiate fiat payment
-- `POST /api/v1/payments/crypto` - Initiate crypto payment
-- `GET /api/v1/payments/{id}/status` - Get payment status
-- `GET /api/v1/payments/investments` - Get user investments
+5. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
 ## Project Structure
 
 ```
 src/
-├── components/          # React components
-│   ├── AuthModal.tsx   # Authentication modal
-│   ├── Dashboard.tsx   # Main dashboard
-│   ├── ProjectCard.tsx # Project display card
-│   ├── ProjectModal.tsx # Project details modal
-│   └── ...
-├── contexts/           # React contexts
-│   └── AuthContext.tsx # Authentication state
-├── services/           # API services
-│   └── api.ts         # API client
-├── types/              # TypeScript types
-│   └── index.ts       # Type definitions
-└── config/             # Configuration
-    └── env.ts         # Environment variables
+├── app/                    # Next.js App Router pages
+│   ├── login/             # Login page
+│   ├── register/          # Registration page
+│   ├── project/[id]/      # Project detail page
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home page (dashboard)
+├── components/            # Reusable components
+│   ├── dashboard.tsx      # Investor dashboard
+│   ├── sme-dashboard.tsx  # SME dashboard
+│   └── header.tsx         # Navigation header
+├── contexts/              # React Context providers
+│   ├── auth-context.tsx   # Authentication state
+│   └── projects-context.tsx # Projects state
+├── lib/                   # Utility libraries
+│   ├── api.ts            # API service
+│   └── env.ts            # Environment configuration
+└── types/                # TypeScript type definitions
+    └── index.ts          # API and component types
 ```
+
+## API Integration
+
+The app integrates with a RESTful API with the following endpoints:
+
+- **Authentication**: `/auth/login`, `/auth/register`
+- **Projects**: `/projects/`, `/projects/{id}`
+- **Payments**: `/payments/initiate`, `/payments/crypto`
+- **Users**: `/users/me`
 
 ## Key Features
 
 ### Authentication Flow
-1. Users can register as either investors or SMEs
-2. Login uses username/password combination
-3. JWT tokens are stored in localStorage
-4. Automatic token validation on app load
+- JWT token-based authentication
+- Automatic token refresh
+- Protected routes
+- Token expiration handling
 
 ### Project Management
-1. SMEs can create new projects with token deployment
-2. Projects include blockchain contract addresses
-3. Real-time progress tracking and status updates
-4. Integration with Polygonscan for contract verification
+- Real-time project filtering
+- Search functionality
+- Category-based filtering
+- Progress tracking
 
-### Payment Processing
-1. **Fiat Payments**: SEPA bank transfers via Circle API
-2. **Crypto Payments**: Direct transfers to escrow contracts
-3. **Status Tracking**: Real-time payment status updates
-4. **Token Distribution**: Automatic token allocation on payment completion
-
-### Blockchain Integration
-1. **Contract Addresses**: Display token and escrow contract addresses
-2. **Transaction Links**: Direct links to Polygonscan for verification
-3. **Deployment Tracking**: Monitor contract deployment status
-4. **Escrow Protection**: Funds held in smart contracts until conditions met
+### Investment Process
+- Project discovery
+- Investment amount calculation
+- Fiat and crypto payment options
+- Transaction tracking
 
 ## Development
 
@@ -128,12 +115,12 @@ src/
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
-- `npm run preview` - Preview production build
+- `npm run start` - Start production server
 - `npm run lint` - Run ESLint
 
-### Code Style
+## Environment Variables
 
-- TypeScript for type safety
-- ESLint for code quality
-- Prettier for code formatting
-- Tailwind CSS for styling
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NEXT_PUBLIC_API_BASE_URL` | Backend API URL | `http://localhost:8000/api/v1` |
+| `NEXT_PUBLIC_POLYGONSCAN_URL` | Polygon blockchain explorer | `https://polygonscan.com` |

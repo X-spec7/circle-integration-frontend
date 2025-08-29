@@ -1,19 +1,25 @@
-// User and Authentication Types
+// API Response types
+export interface ApiResponse<T> {
+  data?: T;
+  error?: string;
+}
+
+export interface ErrorResponse {
+  detail: string;
+  error_code: string;
+}
+
+// User types
 export interface User {
   id: string;
-  email: string;
   username: string;
+  email: string;
   name: string;
   user_type: 'investor' | 'sme';
   created_at: string;
 }
 
-export interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-}
-
+// Authentication types
 export interface LoginRequest {
   username: string;
   password: string;
@@ -29,11 +35,10 @@ export interface RegisterRequest {
 
 export interface LoginResponse {
   access_token: string;
-  token_type: string;
   user: User;
 }
 
-// Project Types
+// Project types
 export interface Project {
   id: string;
   name: string;
@@ -60,15 +65,6 @@ export interface Project {
   updated_at: string;
 }
 
-export interface ProjectDeploymentResponse {
-  project_id: string;
-  token_contract_address: string;
-  escrow_contract_address: string;
-  token_deployment_tx: string;
-  escrow_deployment_tx: string;
-  deployment_status: string;
-}
-
 export interface CreateProjectRequest {
   name: string;
   symbol: string;
@@ -86,8 +82,25 @@ export interface CreateProjectRequest {
 
 export interface UpdateProjectRequest {
   name?: string;
+  symbol?: string;
   description?: string;
+  category?: string;
+  target_amount?: number;
   price_per_token?: number;
+  total_supply?: number;
+  end_date?: string;
+  risk_level?: 'Low' | 'Medium' | 'High';
+  image_url?: string;
+  business_plan_url?: string;
+  whitepaper_url?: string;
+}
+
+export interface ProjectDeploymentResponse {
+  project: Project;
+  token_contract_address: string;
+  escrow_contract_address: string;
+  token_deployment_tx: string;
+  escrow_deployment_tx: string;
 }
 
 export interface ProjectsListResponse {
@@ -99,15 +112,14 @@ export interface ProjectsListResponse {
 
 export interface EscrowAddressResponse {
   escrow_address: string;
-  project_id: string;
 }
 
-// Payment Types
+// Payment types
 export interface PaymentInitiationRequest {
   project_id: string;
   amount: number;
   currency: string;
-  payment_method: 'sepa';
+  payment_method: string;
 }
 
 export interface CryptoPaymentRequest {
@@ -118,31 +130,17 @@ export interface CryptoPaymentRequest {
 
 export interface PaymentResponse {
   payment_id: string;
-  project_id: string;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
   amount: number;
   currency: string;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-  circle_payment_id?: string;
-  bank_details?: {
-    iban: string;
-    bic: string;
-    account_holder: string;
-    reference: string;
-  };
-  escrow_address?: string;
-  blockchain_tx_hash?: string;
-  tokens_allocated?: number;
   created_at: string;
-  completed_at?: string;
 }
 
 export interface CryptoPaymentResponse {
   payment_id: string;
-  project_id: string;
+  escrow_address: string;
   amount: number;
   crypto_currency: string;
-  escrow_address: string;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
   created_at: string;
 }
 
@@ -150,12 +148,9 @@ export interface Investment {
   id: string;
   project_id: string;
   project_name: string;
-  project_symbol: string;
   amount: number;
-  currency: string;
-  tokens_allocated: number;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-  blockchain_tx_hash?: string;
+  tokens_received: number;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED';
   created_at: string;
 }
 
@@ -164,24 +159,8 @@ export interface InvestmentsResponse {
   total: number;
 }
 
-// API Response Types
-export interface ApiResponse<T> {
-  data?: T;
-  error?: string;
-  message?: string;
-}
-
-export interface ErrorResponse {
-  detail: string;
-  error_code: string;
-}
-
 // Legacy types for backward compatibility
 export type TokenProject = Project;
-export interface PaymentMethod {
-  type: 'crypto' | 'fiat';
-  currency: string;
-}
 export type PaymentStatus = PaymentResponse;
 export type ProjectFormData = CreateProjectRequest;
-export type PaymentInitiation = PaymentResponse;
+export type PaymentInitiation = PaymentResponse; 
