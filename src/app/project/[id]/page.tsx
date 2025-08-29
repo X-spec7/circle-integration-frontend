@@ -17,21 +17,17 @@ export default function ProjectDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  console.log('ProjectDetail render:', { id, project, loading, error });
+
 
   useEffect(() => {
     const loadProject = async () => {
       try {
         setLoading(true);
-        console.log('Loading project with ID:', id);
         const response = await apiService.getProject(id);
-        console.log('Project API response:', response);
         
         if (response.error) {
-          console.error('Project API error:', response.error);
           setError(response.error);
         } else if (response.data) {
-          console.log('Project data received:', response.data);
           let projectData: any;
           
           if (Array.isArray(response.data)) {
@@ -39,7 +35,6 @@ export default function ProjectDetailPage() {
           } else if (typeof response.data === 'object' && response.data !== null) {
             projectData = response.data as unknown as Record<string, unknown>;
           } else {
-            console.error('Unexpected response format:', response.data);
             setError('Invalid project data format');
             return;
           }
@@ -61,14 +56,11 @@ export default function ProjectDetailPage() {
             escrow_deployment_tx: projectData.escrow_deployment_tx || '',
           };
           
-          console.log('Mapped project data:', mappedProject);
           setProject(mappedProject);
         } else {
-          console.error('No project data in response');
           setError('Project not found');
         }
       } catch (error) {
-        console.error('Project loading error:', error);
         setError('Failed to load project');
       } finally {
         setLoading(false);
@@ -118,7 +110,7 @@ export default function ProjectDetailPage() {
         <div className="mb-8">
           <button
             onClick={() => router.back()}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+            className="flex items-center text-gray-600 hover:text-gray-900 mb-4 cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Projects
@@ -235,7 +227,7 @@ export default function ProjectDetailPage() {
               {project.status === 'ACTIVE' ? (
                 <button
                   onClick={() => setShowPaymentModal(true)}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors cursor-pointer"
                 >
                   Invest Now
                 </button>
@@ -257,7 +249,7 @@ export default function ProjectDetailPage() {
                       href={apiService.getPolygonscanUrl(project.token_contract_address)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                     >
                       <span className="text-sm text-gray-600">Token Contract</span>
                       <ExternalLink className="h-4 w-4 text-gray-400" />
@@ -269,7 +261,7 @@ export default function ProjectDetailPage() {
                       href={apiService.getPolygonscanUrl(project.escrow_contract_address)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                     >
                       <span className="text-sm text-gray-600">Escrow Contract</span>
                       <ExternalLink className="h-4 w-4 text-gray-400" />

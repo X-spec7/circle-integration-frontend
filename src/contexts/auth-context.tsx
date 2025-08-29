@@ -34,15 +34,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   useEffect(() => {
-    console.log('AuthContext useEffect: Checking for existing session');
     // Check for existing session
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-    console.log('AuthContext: Token found:', !!token);
-    console.log('AuthContext: Current auth state:', authState);
     
     if (token) {
       // Verify token by getting current user
-      console.log('AuthContext: Verifying token...');
       apiService.getCurrentUser().then((response) => {
         if (response.data) {
           setAuthState({
@@ -78,7 +74,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen for token expiration events
     const handleTokenExpired = () => {
-      console.log('AuthContext: Token expired event received');
       setAuthState({
         user: null,
         isAuthenticated: false,
@@ -170,8 +165,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  console.log('AuthProvider rendering with state:', authState);
-  
   return (
     <AuthContext.Provider value={{
       ...authState,

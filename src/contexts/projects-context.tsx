@@ -40,13 +40,10 @@ export const ProjectsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
 
   const loadProjects = useCallback(async (params?: { search?: string; category?: string; limit?: number; offset?: number }) => {
-    console.log('ProjectsContext: Loading projects with params:', params);
-    
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
       const response = await apiService.getProjects(params);
-      console.log('ProjectsContext: API response:', response);
 
       if (response.error) {
         console.error('ProjectsContext: API error:', response.error);
@@ -74,11 +71,9 @@ export const ProjectsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           offset = response.data.offset || 0;
         } else if (Array.isArray(response.data)) {
           // API returns array directly
-          console.log('Processing array response:', response.data);
           
           try {
                                       projectsArray = response.data.map((project: Record<string, unknown>) => {
-               console.log('Processing project:', project);
                const mappedProject: Project = {
                  id: String(project.id || ''),
                  name: String(project.name || ''),
@@ -104,7 +99,6 @@ export const ProjectsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                  created_at: String(project.created_at || ''),
                  updated_at: String(project.updated_at || ''),
                };
-               console.log('Mapped project:', mappedProject);
                return mappedProject;
              });
             total = response.data.length;
@@ -119,8 +113,6 @@ export const ProjectsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           total = 0;
         }
 
-        console.log('Processed projects:', { projectsArray, total, limit, offset });
-        
         try {
           setState(prev => ({
             ...prev,
@@ -142,7 +134,6 @@ export const ProjectsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           }));
         }
       } else {
-        console.log('No data in response');
         setState(prev => ({
           ...prev,
           loading: false,
@@ -164,7 +155,6 @@ export const ProjectsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const refreshProjects = useCallback(async () => {
-    console.log('ProjectsContext: Refreshing projects');
     await loadProjects();
   }, [loadProjects]);
 

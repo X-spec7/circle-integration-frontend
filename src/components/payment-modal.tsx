@@ -47,7 +47,6 @@ export default function PaymentModal({ project, isOpen, onClose }: PaymentModalP
 
         if (response.data) {
           setSuccess(true);
-          console.log('Payment initiated:', response.data);
         }
       } else {
         const response = await apiService.initiateCryptoPayment({
@@ -62,7 +61,6 @@ export default function PaymentModal({ project, isOpen, onClose }: PaymentModalP
 
         if (response.data) {
           setSuccess(true);
-          console.log('Crypto payment initiated:', response.data);
         }
       }
     } catch (error) {
@@ -92,7 +90,7 @@ export default function PaymentModal({ project, isOpen, onClose }: PaymentModalP
             </p>
             <button
               onClick={onClose}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors cursor-pointer"
             >
               Close
             </button>
@@ -115,7 +113,7 @@ export default function PaymentModal({ project, isOpen, onClose }: PaymentModalP
           <h2 className="text-2xl font-bold text-gray-900">Invest in {project.name}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100 cursor-pointer"
           >
             <X className="h-6 w-6" />
           </button>
@@ -137,7 +135,7 @@ export default function PaymentModal({ project, isOpen, onClose }: PaymentModalP
                              <button
                  type="button"
                  onClick={() => setPaymentMethod('fiat')}
-                 className={`p-4 border-2 rounded-lg transition-all duration-200 hover:shadow-md ${
+                 className={`p-4 border-2 rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer ${
                    paymentMethod === 'fiat'
                      ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
@@ -149,10 +147,10 @@ export default function PaymentModal({ project, isOpen, onClose }: PaymentModalP
                              <button
                  type="button"
                  onClick={() => setPaymentMethod('crypto')}
-                 className={`p-4 border-2 rounded-lg transition-all duration-200 hover:shadow-md ${
+                 className={`p-4 border-2 rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer ${
                    paymentMethod === 'crypto'
                      ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
-                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-100'
                  }`}
                >
                 <Coins className="h-6 w-6 mx-auto mb-2" />
